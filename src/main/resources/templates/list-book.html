@@ -30,6 +30,7 @@
 										<th>Publisher Name</th>
 										<th>Serial Name</th>
 										<th>Description</th>
+										<th>Available Copies</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -41,6 +42,7 @@
 										<td th:text="${book.publishers[0].name}"></td>
 										<td th:text="${book.serialName}"></td>
 										<td th:text="${book.description}"></td>
+										<td th:text="${book.availableCopies} + ' / ' + ${book.totalCopies}"></td>
 									</tr>
 								</tbody>
 							</table>

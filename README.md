@@ -20,6 +20,60 @@ Step 7: From the browser call the endpoint http://localhost:9080
 Step 8: Admin Login User Id: ```admin@admin.in``` & Password: ```Temp123```
 
 
+# Borrow / return and availability tracking (MLG1-13)
+
+Each book now has `totalCopies` (default 1) and `availableCopies`. Admins can issue a book to a borrower and record its return.
+
+| Page / endpoint | Description |
+| --- | --- |
+| `GET /books` | Book list now shows `available / total` copies and a **Borrow** button (hidden when no copy is available) |
+| `GET /books/{id}/borrow` | Borrow form (borrower name + due date, defaults to 14 days from today) |
+| `POST /books/{id}/borrow` | Issues the book: creates a loan and decrements `availableCopies`. If `availableCopies = 0` the request is blocked and a friendly message is shown |
+| `GET /loans/open` | Lists open (not yet returned) loans, overdue loans are flagged |
+| `POST /loans/{loanId}/return` | Marks the loan returned and increments `availableCopies` by 1 |
+
+Notes:
+- Add/Update Book forms have a **Total Copies** field. Changing the total keeps the number of copies currently on loan; the total cannot be set lower than that number.
+- Borrow and return run in a transaction and take a pessimistic row lock on the book, so two admins cannot borrow the last copy at the same time.
+- Unknown book/loan IDs now return HTTP 404 (`NotFoundException` is annotated with `@ResponseStatus`).
+
+## Database
+
+The app uses an in-memory H2 database with Hibernate auto-DDL, so the new `loans` table and the two new `books` columns are created automatically on startup. No migration tool (Flyway/Liquibase) is used in this project. If you run against a persistent database with schema auto-update disabled, apply the equivalent DDL (reference only, adjust types to your database):
+
+```sql
+ALTER TABLE books ADD COLUMN total_copies INT NOT NULL DEFAULT 1;
+ALTER TABLE books ADD COLUMN available_copies INT NOT NULL DEFAULT 1;
+
+CREATE TABLE loans (
+    id            BIGINT PRIMARY KEY,
+    book_id       BIGINT NOT NULL REFERENCES books (id),
+    borrower_name VARCHAR(100) NOT NULL,
+    issue_date    DATE NOT NULL,
+    due_date      DATE NOT NULL,
+    returned_date DATE
+);
+```
+
+# Automated tests (MLG1-14)
+
+Run all tests with:
+
+```
+mvn test
+```
+
+| Test class | Type | Covers |
+| --- | --- | --- |
+| `service/LoanServiceTest` | unit (Mockito) | borrow decrements copies, borrow blocked at 0 copies, return increments copies, validation |
+| `service/BookServiceTest` | unit (Mockito) | book CRUD, search, pagination, copy bookkeeping on create/update |
+| `service/MasterDataServiceTest` | unit (Mockito) | author, category and publisher service CRUD |
+| `controller/SecurityAccessIntegrationTest` | integration (MockMvc) | unauthenticated users are redirected to `/login`, admin can open admin pages (status, view, model), CSRF enforced |
+| `controller/CrudControllerIntegrationTest` | integration (MockMvc + H2) | create/read/update/delete for books, authors, categories, publishers |
+| `controller/LoanFlowIntegrationTest` | integration (MockMvc + H2) | full borrow/return flow, blocked borrow, double return, invalid input |
+
+Known gaps (existing behaviour, not changed here): the `/author/{id}`, `/category/{id}` and `/publisher/{id}` detail pages reference templates (`list-author`, `list-category`, `list-publisher`) that do not exist, and deleting a book that has loan records fails with a database constraint error.
+
 # Admin Login Interface
 
 <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiiuctxupeOK4Nh8j-nomwwapjkcVvkYig3lX7qoifcXE76_6CnOXMZ-CLww7G180qegsCkrtyUlaqpJsWm9GzhX9QUFxyNyEUAXFD5UWJpvh2BdIr0wyAnFC38QOdsL_1vak8LtxYHrZyplCU_Sri-7kM9nXxI9heXXB0621rzJgL6j1CSweX6xjaorg/s945/admin-login.png">

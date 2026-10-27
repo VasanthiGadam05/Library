@@ -35,6 +35,12 @@ public class Book {
 	@Column(name = "description", length = 250, nullable = false)
 	private String description;
 
+	@Column(name = "total_copies", nullable = false)
+	private int totalCopies = 1;
+
+	@Column(name = "available_copies", nullable = false)
+	private int availableCopies = 1;
+
 	@ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
 	@JoinTable(name = "books_authors", joinColumns = { @JoinColumn(name = "book_id") }, inverseJoinColumns = {
 			@JoinColumn(name = "author_id") })
@@ -125,6 +131,22 @@ public class Book {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public int getTotalCopies() {
+		return totalCopies;
+	}
+
+	public void setTotalCopies(int totalCopies) {
+		this.totalCopies = totalCopies;
+	}
+
+	public int getAvailableCopies() {
+		return availableCopies;
+	}
+
+	public void setAvailableCopies(int availableCopies) {
+		this.availableCopies = availableCopies;
 	}
 
 	public Set<Author> getAuthors() {
