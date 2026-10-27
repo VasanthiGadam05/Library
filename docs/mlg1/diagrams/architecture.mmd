@@ -1,0 +1,28 @@
+# Library Management System – Architecture Diagram (Mermaid)
+
+```mermaid
+flowchart TB
+  user["Admin/Librarian"] -->|Browser| web["Spring Boot MVC App\n(Thymeleaf UI)"]
+  web -->|Spring Data JPA| db[("RDBMS")] 
+
+  subgraph App["Application Components"]
+    bc["BookController"] --> bs["BookService"] --> br["BookRepository"]
+    bc --> as["AuthorService"]
+    bc --> cs["CategoryService"]
+    bc --> ps["PublisherService"]
+  end
+
+  subgraph Data["Domain Model"]
+    b["Book"] -- M:N --> a["Author"]
+    b -- M:N --> c["Category"]
+    b -- M:N --> p["Publisher"]
+  end
+
+  br --> db
+
+  subgraph Tests["Automated Tests (MLG1-9)"]
+    t1["@DataJpaTest"] --> br
+    t2["@WebMvcTest + MockMvc"] --> bc
+    t1 --> h2[("H2 (test)")]
+  end
+```
