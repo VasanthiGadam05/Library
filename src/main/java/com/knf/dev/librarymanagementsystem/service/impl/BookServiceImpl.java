@@ -49,11 +49,31 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public void createBook(Book book) {
+		if (book.getTotalCopies() < 1) {
+			throw new IllegalArgumentException("Total copies must be at least 1");
+		}
+		// A new book has no active loans, so every copy is available.
+		book.setAvailableCopies(book.getTotalCopies());
 		bookRepository.save(book);
 	}
 
 	@Override
 	public void updateBook(Book book) {
+		if (book.getTotalCopies() < 0) {
+			throw new IllegalArgumentException("Total copies must not be negative");
+		}
+		if (book.getId() != null) {
+			var existing = bookRepository.findById(book.getId());
+			if (existing.isPresent()) {
+				// Keep availability consistent with copies currently out on loan.
+				var onLoan = existing.get().getTotalCopies() - existing.get().getAvailableCopies();
+				if (book.getTotalCopies() < onLoan) {
+					throw new IllegalArgumentException(
+							String.format("Total copies cannot be less than the %d copies currently on loan", onLoan));
+				}
+				book.setAvailableCopies(book.getTotalCopies() - onLoan);
+			}
+		}
 		bookRepository.save(book);
 	}
 

@@ -85,7 +85,12 @@ public class BookController {
 			return "add-book";
 		}
 
-		bookService.createBook(book);
+		try {
+			bookService.createBook(book);
+		} catch (IllegalArgumentException e) {
+			model.addAttribute("errorMessage", e.getMessage());
+			return showCreateForm(book, model);
+		}
 		model.addAttribute("book", bookService.findAllBooks());
 		return "redirect:/books";
 	}
@@ -104,7 +109,13 @@ public class BookController {
 			return "update-book";
 		}
 
-		bookService.updateBook(book);
+		try {
+			bookService.updateBook(book);
+		} catch (IllegalArgumentException e) {
+			book.setId(id);
+			model.addAttribute("errorMessage", e.getMessage());
+			return "update-book";
+		}
 		model.addAttribute("book", bookService.findAllBooks());
 		return "redirect:/books";
 	}

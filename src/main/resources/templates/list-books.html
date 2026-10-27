@@ -17,6 +17,10 @@
 	<div class="container my-2">
 
 		<div th:switch="${books}" class="container my-5">
+			<div th:if="${successMessage}" class="alert alert-success"
+				th:text="${successMessage}"></div>
+			<div th:if="${errorMessage}" class="alert alert-danger"
+				th:text="${errorMessage}"></div>
 			<p class="my-5">
 				<a href="/add" class="btn btn-dark"> <i
 					class="fas fa-user-plus ml-2"> Add Book </i></a>&nbsp;&nbsp;<a
@@ -34,6 +38,8 @@
 								<th>Book Name</th>
 								<th>Serial Name</th>
 								<th>Description</th>
+								<th>Available</th>
+								<th>Borrow</th>
 								<th>Detail</th>
 								<th>Edit</th>
 								<th>Delete</th>
@@ -45,6 +51,12 @@
 								<td th:text="${book.name}"></td>
 								<td th:text="${book.serialName}"></td>
 								<td th:text="${book.description}"></td>
+								<td th:text="${book.availableCopies} + ' / ' + ${book.totalCopies}"></td>
+								<td><a th:if="${book.availableCopies > 0}"
+									th:href="@{/books/{id}/borrow(id=${book.id})}"
+									class="btn btn-primary"><i class="fas fa-book-reader ml-2"></i></a>
+									<span th:unless="${book.availableCopies > 0}"
+									class="badge badge-secondary">Unavailable</span></td>
 								<td><a th:href="@{/book/{id}(id=${book.id})}"
 									class="btn btn-info"><i class="fas fa-marker ml-2"></i></a></td>
 								<td><a th:href="@{/update/{id}(id=${book.id})}"
